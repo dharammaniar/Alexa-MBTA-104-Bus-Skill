@@ -1,7 +1,10 @@
 {
   "intents": [
     {
-      "intent": "HelloWorldIntent"
+      "intent": "104MaldenIntent"
+    },
+    {
+      "intent": "104SullivanIntent"
     },
     {
       "intent": "AMAZON.HelpIntent"
