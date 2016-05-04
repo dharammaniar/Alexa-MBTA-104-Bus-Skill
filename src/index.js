@@ -63,7 +63,7 @@ MBTA104.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest, 
 
 MBTA104.prototype.intentHandlers = {
     // register custom intent handlers
-    "104MaldenIntent": function (intent, session, response) {
+    "MBTAMaldenIntent": function (intent, session, response) {
         response.tellWithCard(
             "The next bus to Malden is in 5 minutes",
             "MBTA 104",

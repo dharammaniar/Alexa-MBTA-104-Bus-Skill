@@ -1,10 +1,10 @@
 {
   "intents": [
     {
-      "intent": "104MaldenIntent"
+      "intent": "MBTAMaldenIntent"
     },
     {
-      "intent": "104SullivanIntent"
+      "intent": "MBTASullivanIntent"
     },
     {
       "intent": "AMAZON.HelpIntent"
