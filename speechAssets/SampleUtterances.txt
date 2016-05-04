@@ -1,1 +1,2 @@
 MBTAMaldenIntent when is the next bus to Malden
+MBTASullivanIntent when is the next bus to Sullivan

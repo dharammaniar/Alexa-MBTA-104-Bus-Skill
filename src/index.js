@@ -28,46 +28,49 @@ var APP_ID = undefined; //replace with "amzn1.echo-sdk-ams.app.[your-unique-valu
  */
 var AlexaSkill = require('./AlexaSkill');
 
+var http = require('http');
+var moment = require('moment');
+
 /**
- * MBTA104 is a child of AlexaSkill.
+ * MBTA is a child of AlexaSkill.
  * To read more about inheritance in JavaScript, see the link below.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Introduction_to_Object-Oriented_JavaScript#Inheritance
  */
-var MBTA104 = function () {
+var MBTA = function () {
     AlexaSkill.call(this, APP_ID);
 };
 
 // Extend AlexaSkill
-MBTA104.prototype = Object.create(AlexaSkill.prototype);
-MBTA104.prototype.constructor = MBTA104;
+MBTA.prototype = Object.create(AlexaSkill.prototype);
+MBTA.prototype.constructor = MBTA;
 
-MBTA104.prototype.eventHandlers.onSessionStarted = function (sessionStartedRequest, session) {
-    console.log("MBTA104 onSessionStarted requestId: " + sessionStartedRequest.requestId
+MBTA.prototype.eventHandlers.onSessionStarted = function (sessionStartedRequest, session) {
+    console.log("MBTA onSessionStarted requestId: " + sessionStartedRequest.requestId
         + ", sessionId: " + session.sessionId);
     // any initialization logic goes here
 };
 
-MBTA104.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
-    console.log("MBTA104 onLaunch requestId: " + launchRequest.requestId + ", sessionId: " + session.sessionId);
+MBTA.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
+    console.log("MBTA onLaunch requestId: " + launchRequest.requestId + ", sessionId: " + session.sessionId);
     var speechOutput = "Welcome to the MBTA 104 Bus Skill, you can say when is the next bus to Malden";
     var repromptText = "You can say when is the next bus to Malden";
     response.ask(speechOutput, repromptText);
 };
 
-MBTA104.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest, session) {
-    console.log("MBTA104 onSessionEnded requestId: " + sessionEndedRequest.requestId
+MBTA.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest, session) {
+    console.log("MBTA onSessionEnded requestId: " + sessionEndedRequest.requestId
         + ", sessionId: " + session.sessionId);
     // any cleanup logic goes here
 };
 
-MBTA104.prototype.intentHandlers = {
+MBTA.prototype.intentHandlers = {
     // register custom intent handlers
     "MBTAMaldenIntent": function (intent, session, response) {
-        response.tellWithCard(
-            "The next bus to Malden is in 5 minutes",
-            "MBTA 104",
-            "The next bus to Malden is in 5 minutes");
+        processIntent('Malden', 'http://realtime.mbta.com/developer/api/v2/predictionsbystop?api_key=wX9NwuHnZU2ToO7GmGR9uw&stop=5357&format=json', response);
+    },
+    "MBTASullivanIntent": function (intent, session, response) {
+        processIntent('Sullivan', 'http://realtime.mbta.com/developer/api/v2/predictionsbystop?api_key=wX9NwuHnZU2ToO7GmGR9uw&stop=5351&format=json', response);
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
         var speechOutput = "Welcome to the MBTA 104 Bus Skill, you can say when is the next bus to Malden";
@@ -76,10 +79,47 @@ MBTA104.prototype.intentHandlers = {
     }
 };
 
+function processIntent(direction, url, response) {
+    http.get(url, function(res) {
+        console.log('Inside successCallback');
+        var str = '';
+        res.on('data', function (chunk) {
+            str += chunk;
+        });
+        res.on('end', function() {
+            console.log('STR: ' + str);
+            var data = JSON.parse(str);
+            console.log('DATA: ' + data);
+            if (data.mode && data.mode.length > 0) {
+                var secondsAway = data.mode[0].route[0].direction[0].trip[0].pre_away;
+                var timeLeft = moment.duration(Number(secondsAway), 'seconds');
+                var minutesLeft = timeLeft.minutes();
+                var secondsLeft = timeLeft.seconds();
+                response.tellWithCard(
+                    "The next bus to " + direction + " is in " + minutesLeft + " minutes and " + secondsLeft + " seconds",
+                    "MBTA",
+                    "The next bus to " + direction + " is in " + minutesLeft + " minutes and " + secondsLeft + " seconds");
+            } else {
+                response.tellWithCard(
+                    "Sorry, there are no scheduled buses to " + direction,
+                    "MBTA",
+                    "Sorry, there are no scheduled buses to " + direction);
+            }
+        });
+
+    }).on('error', function (err) {
+        console.log(err);
+        response.tellWithCard(
+            "Sorry, there are no scheduled buses to " + direction,
+            "MBTA",
+            "Sorry, there are no scheduled buses to " + direction);
+    });
+}
+
 // Create the handler that responds to the Alexa Request.
 exports.handler = function (event, context) {
-    // Create an instance of the MBTA104 skill.
-    var mbta104 = new MBTA104();
-    mbta104.execute(event, context);
+    // Create an instance of the MBTA skill.
+    var mbta = new MBTA();
+    mbta.execute(event, context);
 };
 
