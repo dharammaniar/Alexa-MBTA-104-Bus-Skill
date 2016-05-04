@@ -1,1 +1,3 @@
 *.iml
+*.zip
+src/node_modules/
